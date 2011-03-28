@@ -3,6 +3,7 @@ from StringIO import StringIO
 from django.utils.encoding import smart_str, smart_unicode
 from django.utils import datetime_safe
 
+
 class Serializer(python.Serializer):
     """    
     """
@@ -99,4 +100,3 @@ class Serializer(python.Serializer):
             self.end_object(obj)
         self.end_serialization(total, single_cast)
         return self.getvalue()    
-

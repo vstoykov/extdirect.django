@@ -1,39 +1,73 @@
-DJANGO_EXT_MAP = {
-    'AutoField'                     : 'int',
-    'BooleanField'                  : 'boolean',
-    'CharField'                     : 'string',
-    'CommaSeparatedIntegerField'    : 'string',
-    'DateField'                     : 'date',
-    'DateTimeField'                 : 'date',
-    'DecimalField'                  : 'float',
-    'EmailField'                    : 'string',
-    'FileField'                     : 'string',
-    'FilePathField'                 : 'string', 
-    'FloatField'                    : 'float',
-    'ImageField'                    : 'string',
-    'IntegerField'                  : 'int',
-    'IPAddressField'                : 'string',
-    'NullBooleanField'              : 'boolean',
-    'PositiveIntegerField'          : 'int',
-    'PositiveSmallIntegerField'     : 'int',
-    'SlugField'                     : 'string',
-    'SmallIntegerField'             : 'int',
-    'TextField'                     : 'string',
-    'TimeField'                     : 'date',
-    'URLField'                      : 'string',
-    'XMLField'                      : 'string',
-    'ForeignKey'                    : 'string',
-    #'ManyToMany'                   : ????
-}
+# default fields configs
 
-def meta_fields(model, mappings={}, exclude=[], get_metadata=None):
+import extfields
+
+
+
+def get_field_list(model, exclude = []):
+    # return all fields for a given model
+    fields = [f for f in model._meta.fields if f.name not in exclude]
+    fields += [f for f in model._meta.many_to_many if f.name not in exclude]
+    return fields
+    
+def meta_columns(model,exclude=[], get_metacolumns=None, fields = None):
+    """
+    Generate columns metadata for a given Django model.
+    You could provide the `get_metacolumns` function to generate
+    custom metadata for some fields.
+    """
+    if not fields:
+        fields = get_field_list(model, exclude = exclude)
+    else:
+        fields = [model._meta.get_field(f) for f in fields]
+        
+    result = []
+    
+    # always add unicode field to models
+    # result.append({'name':'__unicode__', 'type':'string'})
+    for field in fields:
+        config = None
+        klass = field.__class__.__name__
+        if get_metacolumns:
+            # If get_metacolumns is not None, then it must be a callable object
+            # and should return the metadata for a given field or None
+            config = get_metacolumns(field)
+            
+        if not config:
+            #If get_metacolumns it's None or returned None for a given field
+            #then, we try to generate the metadata for that field
+            config = {}
+            fieldCls = getattr(extfields, klass, None)
+            if fieldCls:
+                config = fieldCls(field).getColumnConfig()
+             
+            else:                    
+                raise RuntimeError, \
+                    "Field class `%s` not found in extfields.py. Use `get_metacolumns` to resolve the field `%s`." % (klass, field)
+            
+        result.append(config)
+        
+    return result
+    
+def meta_fields(model, mappings={}, exclude=[], get_metadata=None, fields = None):
     """
     Generate metadata for a given Django model.
     You could provide the `get_metadata` function to generate
     custom metadata for some fields.
     """
-    fields = [f for f in model._meta.fields if f.name not in exclude]
+    
+    
+    # if not fields:
+        # fields = get_field_list(model, exclude = exclude)
+    # else:
+        # fields = [model._meta.get_field(f) for f in fields]
+        
+    # always include all model fields as they are needed in case of update
+    
+    fields = get_field_list(model, exclude = exclude)
     result = []
+    # always add unicode field to models
+    result.append({'name':'__unicode__', 'type':'string'})
     for field in fields:
         config = None
         klass = field.__class__.__name__
@@ -46,37 +80,23 @@ def meta_fields(model, mappings={}, exclude=[], get_metadata=None):
             #If get_metadata it's None or returned None for a given field
             #then, we try to generate the metadata for that field
             config = {}
-            
-            if DJANGO_EXT_MAP.has_key(klass):
-                config['name'] = field.name
-                config['allowBlank'] = field.blank
+            fieldCls = getattr(extfields, klass, None)
+            if fieldCls:
+                config = fieldCls(field).getReaderConfig()
                 
                 if mappings.has_key(field.name):
                     config['mapping'] = field.name
-                    config['name'] = mappings[field.name]            
-            
-                config['type'] = DJANGO_EXT_MAP[klass]
-                if klass == 'DateField':
-                    config['dateFormat'] = 'Y-m-d'
-                if klass == 'TimeField':
-                    config['dateFormat'] = 'H:i:s'
-                if klass == 'DateTimeField':
-                    config['dateFormat'] = 'Y-m-d H:i:s'
-                    
+                    config['name'] = mappings[field.name]  
+
                 if field.has_default():
                     config['defaultValue'] = field.default                
             else:                    
                 raise RuntimeError, \
-                    "Field class `%s` not found in DJANGO_EXT_MAP. Use `get_metadata` to resolve the field `%s`." % (klass, field.name)
+                    "Field class `%s` not found in extfields.py. Use `get_metadata` to resolve the field `%s`." % (klass, field.name)
             
         result.append(config)
         
-        if klass == 'ForeignKey':
-            config_cpy = config.copy()
-            config_cpy['name'] = config['name'] + '_id'
-            config_cpy['type'] = 'int'
-            result.append(config_cpy)
-            
+
     return result
     
 

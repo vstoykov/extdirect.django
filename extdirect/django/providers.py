@@ -5,6 +5,8 @@ from django.utils import simplejson
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 
+from directory.extserializer import jsonDumpStripped
+
 SCRIPT = """
 Ext.onReady(function() {
     Ext.Direct.addProvider(%s);
@@ -69,7 +71,7 @@ class ExtDirectProvider(object):
                 ...
             )
         """
-        config = simplejson.dumps(self._config)
+        config = jsonDumpStripped(self._config)
         js =  SCRIPT % config
                 
         return HttpResponse(js, mimetype='text/javascript')
@@ -96,12 +98,12 @@ class ExtRemotingProvider(ExtDirectProvider):
         if request.GET.has_key('format') and request.GET['format'] == 'json':
             conf['descriptor'] = descriptor
             mimetype = 'application/json'
-            response = simplejson.dumps(conf)
+            response = jsonDumpStripped(conf)
         else:
             response = """
 Ext.ns('%s');
 %s = %s
-""" % (self.namespace, descriptor, simplejson.dumps(self._config))
+""" % (self.namespace, descriptor, jsonDumpStripped(self._config))
             mimetype = 'text/javascript'
             
         return HttpResponse(response, mimetype=mimetype)
@@ -180,7 +182,6 @@ Ext.ns('%s');
             if not request.user.has_perm(permission):                
                 response['result'] = dict(success=False, messsage='You need `%s` permission to run this method' % permission)
                 return response
-                
         if data:
             #this is a simple hack to convert all the dictionaries keys
             #to strings instead of unicodes. {u'key': u'value'} --> {'key': u'value'}
@@ -223,7 +224,9 @@ Ext.ns('%s');
         Check if the request came from a Form POST and call
         the dispatcher for every ExtDirect request recieved.
         """
+        #print "routeur"
         if request.POST.has_key('extAction'):
+            #print "ok"
             extdirect_request = dict(
                 action = request.POST['extAction'],
                 method = request.POST['extMethod'],
@@ -232,8 +235,9 @@ Ext.ns('%s');
                 isForm = True
             )        
         elif request.raw_post_data:
+           # print 11
             extdirect_request = simplejson.loads(request.raw_post_data)            
-            
+            #print extdirect_request
         else:
             return HttpResponseBadRequest('Invalid request')
 
@@ -253,7 +257,7 @@ Ext.ns('%s');
         else:
             mimetype = 'application/json'
             
-        return HttpResponse(simplejson.dumps(response, cls=DjangoJSONEncoder), mimetype=mimetype)
+        return HttpResponse(jsonDumpStripped(response), mimetype=mimetype)
         
 
 class ExtPollingProvider(ExtDirectProvider):
@@ -293,14 +297,14 @@ class ExtPollingProvider(ExtDirectProvider):
                 response['type'] = 'event'
                 response['data'] = 'You must be authenticated to run this method.'
                 response['name'] = self.event
-                return HttpResponse(simplejson.dumps(response, cls=DjangoJSONEncoder), mimetype='application/json')
+                return HttpResponse(jsonDumpStripped(response), mimetype='application/json')
                 
         if(self.permission):            
             if not request.user.has_perm(self.permission):
                 response['type'] = 'result'
                 response['data'] = 'You need `%s` permission to run this method' % self.permission
                 response['name'] = self.event
-                return HttpResponse(simplejson.dumps(response, cls=DjangoJSONEncoder), mimetype='application/json')
+                return HttpResponse(jsonDumpStripped(response), mimetype='application/json')
         
         try:
             if self.func:
@@ -319,4 +323,4 @@ class ExtPollingProvider(ExtDirectProvider):
             else:
                 raise e
         
-        return HttpResponse(simplejson.dumps(response, cls=DjangoJSONEncoder), mimetype='application/json')
+        return HttpResponse(jsonDumpStripped(response), mimetype='application/json')

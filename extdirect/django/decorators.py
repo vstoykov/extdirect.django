@@ -22,17 +22,17 @@ def polling(provider, login_required=False, permission=None):
         return func
     
     return decorator
+ 
+def crud(original_class, provider, action=None, login_required=False, permission=None):
+    orig_init = original_class.__init__
+    # make copy of original __init__, so we can call it without recursion
 
-def crud(provider, action=None, login_required=False, permission=None):
-    """
-    Very simple class decorator, just initialize the object. All the magic it's in
-    BaseExtDirectCRUD. So, you must ensure that your class inherit from ExtDirectCRUD.
-    """    
-    def decorator(klass, action):        
-        action = action or klass.__name__    
-        i = klass()
+    def __init__(self, id, *args, **kws):
+        action = action or original_class.__name__   
+        i = original_class()
         i.register_actions(provider, action, login_required, permission)
         
-        return klass        
-        
-    return lambda klass: decorator(klass, action)
+        orig_init(self, *args, **kws) # call the original __init__
+
+    original_class.__init__ = __init__ # set the class' __init__ to the new one
+    return original_class
