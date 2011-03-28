@@ -5,7 +5,7 @@ from django.utils import simplejson
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 
-from directory.extserializer import jsonDumpStripped
+from extserializer import jsonDumpStripped
 
 SCRIPT = """
 Ext.onReady(function() {
