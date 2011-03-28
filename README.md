@@ -1,7 +1,7 @@
 extdirect.django
 ====
 
-extdirect.django allows to generate ExtJS components from your django models
+extdirect.django allows you to generate ExtJS components from your django models
 
 This is a fork from [gsancho original project][1].
 
@@ -24,7 +24,7 @@ This is a fork from [gsancho original project][1].
 
 **Doc :**
 
- * See [the demo][5] for full examples
+ * See [the demo][5] for full examples or [the tutorial][6]
  * See [original project][1] for low-level details
 
 
@@ -35,3 +35,4 @@ This is a fork from [gsancho original project][1].
   [3]: http://www.djangoproject.com
   [4]: https://github.com/revolunet/Ext.ux.AwesomeCombo
   [5]: #
+  [6]: #
