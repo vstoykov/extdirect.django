@@ -161,10 +161,16 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
             if (store.getTotalCount() > this.limit) this.getBottomToolbar().show();
         }, this);
  
+        // relay some store events
+        this.relayEvents(this.store, ['destroy', 'save', 'update']);
+    
         Ext.django.Grid.superclass.initComponent.apply( this, arguments );
+        
+        
         this.on('beforeedit', function() {
             if (!this.editable) return false;
         }, this);
+        
         this.getBottomToolbar().bindStore(this.store);
     }
 
