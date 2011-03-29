@@ -67,7 +67,7 @@ def meta_fields(model, mappings={}, exclude=[], get_metadata=None, fields = None
     fields = get_field_list(model, exclude = exclude)
     result = []
     # always add unicode field to models
-    result.append({'name':'__unicode__', 'type':'string'})
+    result.append({'name':'__unicode__', 'type':'string', 'allowBlank': True})
     for field in fields:
         config = None
         klass = field.__class__.__name__
@@ -82,14 +82,19 @@ def meta_fields(model, mappings={}, exclude=[], get_metadata=None, fields = None
             config = {}
             fieldCls = getattr(extfields, klass, None)
             if fieldCls:
-                config = fieldCls(field).getReaderConfig()
+                configCls = fieldCls(field)
+                config = configCls.getReaderConfig()
                 
                 if mappings.has_key(field.name):
-                    config['mapping'] = field.name
-                    config['name'] = mappings[field.name]  
+                
+                    config['mapping'] = unicode( field.name )
+                    config['name'] = unicode( mappings[field.name]  )
 
                 if field.has_default():
-                    config['defaultValue'] = field.default                
+                    if callable(field.default):
+                        config['defaultValue'] =  configCls.getValue(field.default())
+                    else:
+                        config['defaultValue'] =  configCls.getValue(field.default )
             else:                    
                 raise RuntimeError, \
                     "Field class `%s` not found in extfields.py. Use `get_metadata` to resolve the field `%s`." % (klass, field.name)

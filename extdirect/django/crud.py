@@ -386,7 +386,7 @@ class ExtDirectCRUDComplex(ExtDirectCRUD):
                 f = self.model._meta.get_field(field)
                 if isinstance(f, fields.DateTimeField) or isinstance(f, fields.DateField) or isinstance(f, fields.TimeField):
                     c = getattr(extfields, f.__class__.__name__)(f)
-                    data[field] = c.parseValue(v)
+                    data[field] = (c.parseValue(v))
                 elif isinstance(f, fields.URLField):
                     # remove urlvalidator (=> urllib...)
                     f.validators = []

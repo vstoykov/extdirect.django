@@ -45,7 +45,6 @@ def jsonDump( obj ):
                     
 def jsonDumpStripped( inDict ):
     """ strip some specials values for ExtJs in the simplejson dump """
-    
     jsonStr = jsonDump(inDict)
     rawstr = r"""\"(renderer|editor|hidden|sortable|sortInfo|listeners|view|failure|success|scope|fn|store|handler|callback|function)"\s*:\s*"(.+)\""""
     reg = re.compile(rawstr,  re.MULTILINE)

@@ -62,6 +62,7 @@ Ext.django.IndexStore = Ext.extend(Ext.django.Store, {
 Ext.django.Combo = Ext.extend(Ext.ux.AwesomeCombo, {
     // direct model AwesomeCombo
     constructor:function(config) {
+        var pageSize = config.pageSize || 0;
         var baseParams = {}       
         var model = config.model.replace('.', '_');
         var config = Ext.applyIf(config, {
@@ -69,13 +70,21 @@ Ext.django.Combo = Ext.extend(Ext.ux.AwesomeCombo, {
             ,displayField:'__unicode__'
             ,triggerAction:'all'
             ,format:'object'
-            ,store: new Ext.django.IndexStore({api:{read:django[model].read}})
+            ,pageSize:pageSize
+            ,store: new Ext.django.IndexStore({
+                api:{read:django[model].read}
+                ,baseParams:{
+                    start:0
+                    ,limit:pageSize
+                }
+                })
             ,emptyText:'choose :'
             ,typeAhead:false
             ,mode:'local'
             ,editable:false              
         });
         Ext.django.Combo.superclass.constructor.call( this, config );
+
     }
 });
 
@@ -89,6 +98,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
     ,columnsConfig:[]
     ,model:'app.ModelName'
     ,editable:false
+    ,defaultRecordData:{}
     ,initComponent: function() {
         
         model = this.model.replace('.','_')
@@ -104,8 +114,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
             displayInfo:true
             ,hidden:true
             ,pageSize:this.limit
-            ,prependButtons:true
-            
+            ,prependButtons:true            
         });
        
         var storeConfig = {
@@ -151,23 +160,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
             // auto show paging toolbat
             if (store.getTotalCount() > this.limit) this.getBottomToolbar().show();
         }, this);
-        /*
-        Ext.data.DirectStore({
-    		fields:[]
-    		,autoSave:true
-    		,remoteSort: true
-    		,baseParams:{schema:"accelrh", table:"client"}
-          	,sortInfo:{field:"", direction:""}
-          	,writer:new Ext.data.JsonWriter({
-                encode:false
-                ,encodeDelete:true
-          	})
-          	,paramsAsHash:false
-            ,paramOrder:this.paramOrder
-          	,api:this.api
-        });
-        */
-       
+ 
         Ext.django.Grid.superclass.initComponent.apply( this, arguments );
         this.on('beforeedit', function() {
             if (!this.editable) return false;
@@ -232,7 +225,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
     }
     ,onAdd:function(btn, ev) {
         var store = this.getStore();
-         var u = new store.recordType({});
+         var u = new store.recordType(this.defaultRecordData || {});
         this.editor.stopEditing();
         store.insert(0, u);
         this.editor.startEditing(0);

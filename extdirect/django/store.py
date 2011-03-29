@@ -54,6 +54,10 @@ class ExtDirectStore(object):
             if self.sort_info:
                 self.metadata.update({'sortInfo': self.sort_info})
             
+            # if self.model.__name__ == 'User':
+                # for field in fields:
+                    # if not field['allowBlank']:
+                        # print 'mandatory', field
            
             self.metadata.update(self.custom_meta)  
             
@@ -93,7 +97,8 @@ class ExtDirectStore(object):
         if order:
             queryset = queryset.order_by(sort)
                 
-        if not paginate:
+        
+        if not paginate or (limit==0):
             objects = queryset
             total = queryset.count()
         else:

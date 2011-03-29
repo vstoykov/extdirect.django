@@ -1,3 +1,9 @@
+ 
+ 
+import datetime
+from django.core.urlresolvers import reverse
+from django.utils.encoding import smart_str, smart_unicode
+
 #
 # ExtJs Field models
 #
@@ -16,11 +22,7 @@
 #'PositiveSmallIntegerField'     : {'type':'int'}
 #'SmallIntegerField'             : {'type':'int'}
 #'TextField'                     : {'type':'string'}
- 
- 
-import datetime
 
-from django.core.urlresolvers import reverse
 
 class Field(object):
     WIDTH = None
@@ -30,14 +32,14 @@ class Field(object):
     def getEditor(self, initialValue = False):
         label = self.field.name
         if self.field.verbose_name:
-            label = self.field.verbose_name
+            label = unicode(self.field.verbose_name)
         if not self.field.blank:
             label += '*'
         conf = {
             'xtype':'textfield'
             ,'fieldLabel':label
             ,'allowBlank':self.field.blank
-            ,'name':self.field.name 
+            ,'name':unicode( self.field.name )
             
             }
         
@@ -66,7 +68,7 @@ class Field(object):
         
     def getReaderConfig(self):
         conf = {
-                'name': self.field.name
+                'name': unicode(self.field.name)
                 ,'allowBlank': self.field.blank
                 }
         return conf
@@ -74,12 +76,12 @@ class Field(object):
         
     def getColumnConfig(self):
         conf = {
-            'header': self.field.verbose_name, 
-            'tooltip': self.field.verbose_name, 
-            'name':self.field.name,
+            'header': unicode(self.field.verbose_name), 
+            'tooltip': unicode(self.field.verbose_name), 
+            'name':unicode(self.field.name),
             'width': 40, 
             'sortable': True, 
-            'dataIndex': self.field.name,
+            'dataIndex': unicode(self.field.name),
             'editor':self.getEditor()
         }
         if self.WIDTH:  
@@ -187,6 +189,7 @@ class DateTimeField(Field):
     FORMAT_RENDERER = 'Y-m-d H:i'
     EDITOR_XTYPE = 'datefield'
     FORMAT_PARSE = '%Y-%m-%dT%H:%M:%S'
+    FORMAT_GET = '%Y-%m-%dT%H:%M:%S'
     WIDTH = 50
     def getEditor(self, initialValue = False):
         conf = super(DateTimeField, self).getEditor(initialValue = initialValue)
@@ -211,7 +214,11 @@ class DateTimeField(Field):
         if value:
             value = datetime.datetime.strptime(value, self.FORMAT_PARSE)
         return value
-     
+    
+    def getValue(self, value):
+        # format data for ExtJs emitter
+        return value.strftime(self.FORMAT_GET)
+        
 class DateField(DateTimeField):
     FORMAT = 'Y-m-d'
     FORMAT_RENDERER = 'Y-m-d'
