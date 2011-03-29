@@ -75,6 +75,7 @@ class Field(object):
     def getColumnConfig(self):
         conf = {
             'header': self.field.verbose_name, 
+            'tooltip': self.field.verbose_name, 
             'width': 40, 
             'sortable': True, 
             'dataIndex': self.field.name,
