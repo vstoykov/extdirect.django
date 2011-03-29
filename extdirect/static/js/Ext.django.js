@@ -82,7 +82,7 @@ Ext.django.Combo = Ext.extend(Ext.ux.AwesomeCombo, {
 Ext.reg('djangocombo', Ext.django.Combo);
  
    
-Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
+Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
 
 	limit:10
 	,loadMask:true
@@ -105,17 +105,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
             ,hidden:true
             ,pageSize:this.limit
             ,prependButtons:true
-            // ,items:[{
-                // text:"Add Row"
-                // ,iconCls:"icon-add"
-                // ,scope:this
-                // ,handler:this.addRow
-            // }, "-", {
-                // text:"Remove Row"
-                // ,iconCls:"icon-remove"
-                // ,scope:this
-                // ,handler:this.removeRows
-            // }, "->", "-"]
+            
         });
        
         var storeConfig = {
@@ -179,7 +169,9 @@ Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
         */
        
         Ext.django.Grid.superclass.initComponent.apply( this, arguments );
-        
+        this.on('beforeedit', function() {
+            if (!this.editable) return false;
+        }, this);
         this.getBottomToolbar().bindStore(this.store);
     }
 
@@ -189,18 +181,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
         this.syncFocusEl(0);
     }
 
-    ,addRow:function() {
-        var u = new this.store.recordType({});
-      
-        this.stopEditing();
-        this.store.insert(0, u);
-        this.startEditing(0, 1);
-    }
-
-    ,removeRows:function() {
-        var records = this.getSelectionModel().getSelections();
-        this.store.remove(records);
-    }
+   
     // override to make a correct comparaison of complex object
     ,onEditComplete : function(ed, value, startValue){
         this.editing = false;
@@ -234,9 +215,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
     }
     ,onAdd:function(btn, ev) {
         var store = this.getStore();
-        var u = new store.recordType({
-            id:null
-        });
+         var u = new store.recordType({});
         this.editor.stopEditing();
         store.insert(0, u);
         this.editor.startEditing(0);
@@ -251,7 +230,8 @@ Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
         store.remove(rec);
     }
 
-});
-
+}); 
+    
+    
 Ext.reg('djangogrid', Ext.django.Grid);
- 
+    
