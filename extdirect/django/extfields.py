@@ -76,6 +76,7 @@ class Field(object):
         conf = {
             'header': self.field.verbose_name, 
             'tooltip': self.field.verbose_name, 
+            'name':self.field.name,
             'width': 40, 
             'sortable': True, 
             'dataIndex': self.field.name,

@@ -86,14 +86,13 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
 
 	limit:10
 	,loadMask:true
-    ,actions:[]
+    ,columnsConfig:[]
     ,model:'app.ModelName'
     ,editable:false
     ,initComponent: function() {
         
         model = this.model.replace('.','_')
         this.columns = [];
-        
     	this.viewConfig = Ext.apply(this.viewConfig || {forceFit:true}, {onDataChange:this.onDataChange});
 
         this.selModel = new Ext.grid.RowSelectionModel({
@@ -178,18 +177,24 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
 
     ,onDataChange:function() {
         var columns = this.ds.reader.jsonData.columns;
-        // add rowactions if any
-        if (this.grid.actions && this.grid.actions.length > 0) {
-            columns.push({
-                    xtype: 'actioncolumn',
-                    width:10,
-                    header: 'actions',
-                    align:'center',
-                    //width: (this.grid.actions.length),
-                    items:this.grid.actions
-                    });
+        var columns2 = columns;
+        // override with custom colModel if any
+        if (this.grid.columnsConfig && this.grid.columnsConfig.length > 0) {
+            Ext.each(this.grid.columnsConfig, function(item) {
+                var added = false;
+                Ext.each(columns, function(item2) {
+                    if (item.name && item2.name && (item2.name == item.name) ) {
+                        colConfig = item2;
+                        Ext.apply(colConfig, item);                       
+                        added = true;
+                    }
+                });
+                if (!added) {
+                    columns2.push( item );
+                }
+            });
         }
-        this.cm.setConfig(columns);
+        this.cm.setConfig(columns2);
         this.syncFocusEl(0);
     }
 
