@@ -420,6 +420,13 @@ class ExtDirectCRUDComplex(ExtDirectCRUD):
         return res
     
  
-        
+    
+    def extract_destroy_data(self, request):
+        #It must return the id or list of id's to be deleted.
+        data =  request.extdirect_post_data[0]
+        data = data[self.store.root]
+        data = data.get('id')
+        return data
+    
  
         

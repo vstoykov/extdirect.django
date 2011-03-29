@@ -44,7 +44,7 @@ Ext.django.Store = Ext.extend(Ext.data.DirectStore, {
             ,baseParams:baseParams
             ,autoLoad:true
             });
-        console.log('STORE', config);
+
         Ext.django.Store.superclass.constructor.call( this, config );
      }
 });
@@ -97,7 +97,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.GridPanel, {
 
         this.selModel = new Ext.grid.RowSelectionModel({
             moveEditorOnEnter:false
-            ,singleSelect:true
+            ,singleSelect:false
         });
         
         this.bbar = new Ext.PagingToolbar({

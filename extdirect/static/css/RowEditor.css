@@ -59,3 +59,10 @@
     list-style-type:disc;
     margin-left:15px;
 }
+
+.icon-add {
+    background: transparent url(../images/plus-circle.png) no-repeat;
+} 
+.icon-delete {
+    background: transparent url(../images/minus-circle.png) no-repeat;
+}
