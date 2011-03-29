@@ -66,3 +66,7 @@
 .icon-delete {
     background: transparent url(../images/minus-circle.png) no-repeat;
 }
+.x-action-col-icon {
+    /* some space between rowactions */
+    margin-right:5px;
+}
