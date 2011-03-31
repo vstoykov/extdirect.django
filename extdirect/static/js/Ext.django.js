@@ -61,8 +61,6 @@ Ext.django.M2MRenderer = function(obj) {
     return obj;
 }
 
-    
-    
 
 Ext.django.Store = Ext.extend(Ext.data.DirectStore, {
     // a direct store for django models 
@@ -95,7 +93,7 @@ Ext.django.IndexStore = Ext.extend(Ext.django.Store, {
 });
  
    
-Ext.django.Combo = Ext.extend(Ext.ux.AwesomeCombo, {
+Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
     // direct model AwesomeCombo
     constructor:function(config) {
         var pageSize = config.pageSize || 0;
@@ -122,12 +120,12 @@ Ext.django.Combo = Ext.extend(Ext.ux.AwesomeCombo, {
             ,minChars:2
             ,editable:false              
         });
-        Ext.django.Combo.superclass.constructor.call( this, config );
+        Ext.django.ComboBox.superclass.constructor.call( this, config );
 
     }
 });
 
-Ext.reg('djangocombo', Ext.django.Combo);
+
  
    
 Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
@@ -287,12 +285,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
 }); 
     
     
-function testD() {
-    console.log(1);
-    r = django[ 'forms_SampleForm' ].getFields();
-    console.log(r);
-    
-}
+ 
 
 Ext.django.Form = Ext.extend(Ext.Panel, {
     border: false,
@@ -384,53 +377,43 @@ Ext.django.Form = Ext.extend(Ext.Panel, {
 });
 
  
- 
-    
-/*
-this.form.addEvents({
-            'submitSuccess': true,
-            'submitFailure': true
+Ext.django.DataView = Ext.extend(Ext.DataView ,{
+    model:'app.Model',
+    tpl:null,
+    initComponent:function() {
+        var model = this.model.replace('.','_')
+        var store = new Ext.django.Store({
+            api:{
+                read:django[model].read
+            },
+            autoLoad:true,
+            baseParams:{
+                meta:true
+               ,colModel:true
+              }
         });
-        
-
- var actionName = 'forms_' + this.formCls;
-        console.log( actionName );
+        this.relayEvents(store, ['load']);
         var config = {
-            api: django[ actionName ],
-            buttons:[{
-                text: 'Submit',
-                scope:this,
-                handler: function(){    
-                    console.log('submit form', this, arguments);
-                    this.getForm().submit({
-                        params: {
-                            test2:2
-                        },
-                        failure: function( form, action ){
-                            if( action.failureType == Ext.form.Action.SERVER_INVALID && typeof action.result.errors['__all__'] != 'undefined' ){
-                                alert('form submit failure' + action.result.errors); 
-                                }
-                            form.fireEvent("submitFailure", form, action);
-                        },
-                        success: function( form, action ){
-                            form.fireEvent("submitSuccess", form, action);
-                        }
-                    });
-                    
-                }
-            }],
-            // configs apply to child items
-            defaults: {anchor: '-20'}, // provide some room on right for validation errors
-            defaultType: 'textfield',
-            items: testD(),
-            paramsAsHash: true,
-            //paramOrder: ['test', 'test2']
-            */
-            
-            
-            
+            store: store,
+            tpl: this.tpl,
+            autoHeight:true,    
+            multiSelect: true,
+            overClass:'x-view-over',
+            itemSelector:'div.thumb-wrap',
+            emptyText: 'Nothing to display'
+        }
+        Ext.apply(this, config);
+        Ext.django.DataView.superclass.initComponent.apply(this, arguments);
+        
+    }
+});
+
+ 
+
 
 Ext.reg('djangogrid', Ext.django.Grid);
 Ext.reg('djangoform', Ext.django.Form);
+Ext.reg('djangocombo', Ext.django.ComboBox);
+Ext.reg('djangodataview', Ext.django.DataView);
  
     
