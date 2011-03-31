@@ -3,7 +3,7 @@
 import datetime
 from django.core.urlresolvers import reverse
 from django.utils.encoding import smart_str, smart_unicode
-
+from django import forms
 #
 # ExtJs Field models
 #
@@ -23,28 +23,35 @@ from django.utils.encoding import smart_str, smart_unicode
 #'SmallIntegerField'             : {'type':'int'}
 #'TextField'                     : {'type':'string'}
 
-
+ 
 class Field(object):
-    WIDTH = None
+    WIDTH = 200
+    COL_WIDTH = None
     def __init__(self, field):
         self.field = field  # django field
     
-    def getEditor(self, initialValue = False):
-        label = self.field.name
-        if self.field.verbose_name:
+    def getEditor(self, initialValue = False, data = {}):
+        name = self.getName()
+        label = name
+         
+        if getattr(self.field, 'verbose_name', None):
             label = unicode(self.field.verbose_name)
-        if not self.field.blank:
-            label += '*'
+        
+        # if not self.field.blank:
+            # label += '*'
         conf = {
             'xtype':'textfield'
             ,'fieldLabel':label
-            ,'allowBlank':self.field.blank
-            ,'name':unicode( self.field.name )
-            
+            ,'allowBlank':self.allowBlank()
+            ,'name':name
             }
-        
+        if getattr(self.field, 'initial', None):
+            conf['value'] = unicode(self.field.initial)
         if initialValue:
             conf['value'] = self.getValue(initialValue)
+        if getattr(self.field, 'help_text', None):
+            conf['emptyText'] = unicode(getattr(self.field, 'help_text'))
+            #conf['tooltip'] = unicode(getattr(self.field, 'help_text'))
         if getattr(self.field, 'max_length', None):
             pixels = self.field.max_length*5
             if pixels<40:
@@ -55,21 +62,38 @@ class Field(object):
         if self.WIDTH:  
             conf['width'] = self.WIDTH
         # disable some fields : eg: autofields and auto datetimefields
-        if not self.field.editable or self.field.__class__.__name__ == 'AutoField':
+        if not getattr(self.field, 'editable', True) or self.field.__class__.__name__ == 'AutoField':
             conf = {
                 'xtype':'hidden'
                 ,'disabled':True
                 ,'editable':False
-                ,'name':self.field.name
+                ,'name':name
                 }
-            
+        conf.update(data)
         #if self.field.name in  .in _get_validation_exclusions
         return conf
-        
+            
+    def getName(self):
+        if isinstance(self.field, forms.Field):
+            name = self.field.label
+        else:
+            name = self.field.name
+        if not name:
+            name = self.field.__class__.__name__
+        return unicode(name)
+
+    def allowBlank(self):
+        allow = True
+        if isinstance(self.field, forms.Field):
+            allow = not(self.field.required)
+        else:
+            allow = self.field.blank
+        return allow
+
     def getReaderConfig(self):
         conf = {
-                'name': unicode(self.field.name)
-                ,'allowBlank': self.field.blank
+                'name': self.getName()
+                ,'allowBlank': self.allowBlank()
                 }
         return conf
         
@@ -79,13 +103,12 @@ class Field(object):
             'header': unicode(self.field.verbose_name), 
             'tooltip': unicode(self.field.verbose_name), 
             'name':unicode(self.field.name),
-            'width': 40, 
             'sortable': True, 
             'dataIndex': unicode(self.field.name),
             'editor':self.getEditor()
         }
-        if self.WIDTH:  
-            conf['width'] = self.WIDTH
+        if self.COL_WIDTH:  
+            conf['width'] = self.COL_WIDTH
         return conf
 
     def parseValue(self, value):
@@ -99,8 +122,8 @@ class Field(object):
         
 class AutoField(Field):
     WIDTH=40
-    def getEditor(self, initialValue = False):
-        conf = super(AutoField, self).getEditor(initialValue = initialValue)
+    def getEditor(self, *args, **kwargs):
+        conf = super(AutoField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'hidden', 'editable':False} )
         return conf
         
@@ -110,26 +133,28 @@ class AutoField(Field):
         return conf
         
 class EmailField(Field):
-    WIDTH=70
-    def getEditor(self, initialValue = False):
-        conf = super(EmailField, self).getEditor(initialValue = initialValue)
+    WIDTH=250
+    def getEditor(self, *args, **kwargs):
+        conf = super(EmailField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'textfield', 'vtype':'email'} )
         return conf
         
 class URLField(Field):
-    WIDTH=70
-    def getEditor(self, initialValue = False):
-        conf = super(URLField, self).getEditor(initialValue = initialValue)
+    WIDTH=250
+    def getEditor(self, *args, **kwargs):
+        conf = super(URLField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'textfield', 'vtype':'url'} )
         return conf
 
 class CharField(Field):
-    def getEditor(self, initialValue = False):
-        conf = super(CharField, self).getEditor(initialValue = initialValue)
+    def getEditor(self, *args, **kwargs):
+        conf = super(CharField, self).getEditor(*args, **kwargs)
         if getattr(self.field, 'choices', None):
             choices =  {
-                'xtype':'combo'
+                'xtype':'awesomecombo'
+                ,'format':'string'
                 ,'displayField':'value'
+                ,'hiddenName':conf.get('name')
                 ,'valueField':'id'
                 ,'mode':'local'
                 ,'triggerAction':'all'
@@ -146,14 +171,31 @@ class CharField(Field):
 
         return {'xtype':'textfield'}
         
- 
- 
-            
+ChoiceField = CharField
+SlugField = CharField
+
+class MultipleChoiceField(ChoiceField):
+    def getEditor(self, *args, **kwargs):  
+        conf = super(MultipleChoiceField, self).getEditor(*args, **kwargs)
+        conf['enableMultiSelect'] = True
+        conf['format'] = 'array'
+        return conf
+
+class MultipleStringChoiceField(ChoiceField):
+    def getEditor(self, *args, **kwargs):  
+        conf = super(MultipleStringChoiceField, self).getEditor(*args, **kwargs)
+        conf['enableMultiSelect'] = True
+        conf['format'] = 'string'
+        return conf
+          
+          
+
 class DecimalField(Field):
     FORMAT_RENDERER = '0.00'
     TYPE = 'float'
-    def getEditor(self, initialValue = False):
-        conf = super(DecimalField, self).getEditor(initialValue = initialValue)
+    COL_WIDTH = 50
+    def getEditor(self, *args, **kwargs):
+        conf = super(DecimalField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'numberfield', 'style':'text-align:right', 'width':50} )
         return conf
 
@@ -167,7 +209,6 @@ class DecimalField(Field):
         conf['xtype'] = 'numbercolumn'
         conf['align'] = 'right'
         conf['format'] = self.FORMAT_RENDERER
-        conf['width'] = 50
         return conf
         
     def parseValue(self, value):
@@ -191,8 +232,9 @@ class DateTimeField(Field):
     FORMAT_PARSE = '%Y-%m-%dT%H:%M:%S'
     FORMAT_GET = '%Y-%m-%dT%H:%M:%S'
     WIDTH = 50
-    def getEditor(self, initialValue = False):
-        conf = super(DateTimeField, self).getEditor(initialValue = initialValue)
+    COL_WIDTH = 50
+    def getEditor(self, *args, **kwargs):
+        conf = super(DateTimeField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':self.EDITOR_XTYPE, 'format':self.FORMAT} )
         return conf
 
@@ -206,7 +248,6 @@ class DateTimeField(Field):
         conf = super(DateTimeField, self).getColumnConfig()
         conf['xtype'] = 'datecolumn'
         conf['align'] = 'center'
-        conf['width'] = self.WIDTH
         conf['format'] = self.FORMAT_RENDERER
         return conf
      
@@ -224,6 +265,7 @@ class DateField(DateTimeField):
     FORMAT_RENDERER = 'Y-m-d'
     FORMAT_PARSE = '%Y-%m-%d'
     WIDTH = 30
+    COL_WIDTH = 30
     def parseValue(self, value):
         if value:
             if value.find('T')>0:
@@ -237,6 +279,7 @@ class TimeField(DateTimeField):
     EDITOR_XTYPE = 'timefield'
     FORMAT_PARSE = '%H:%M:%S'
     WIDTH = 30
+    COL_WIDTH = 30
     def parseValue(self, value):
         if value:
             if value.find('T')>0:
@@ -252,13 +295,15 @@ class TimeField(DateTimeField):
      
 class BooleanField(Field):
 
-    WIDTH=30
-    
-    def getEditor(self, initialValue = False):
-        conf = super(BooleanField, self).getEditor(initialValue = initialValue)
+    WIDTH = 30
+    COL_WIDTH = 30
+    def getEditor(self, *args, **kwargs):
+        conf = super(BooleanField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'checkbox'} )
-        if initialValue == True:
+        if kwargs.get('initialValue') == True:
             conf.update( {'checked':True} )
+        if getattr(self.field, 'initial', None) == True:
+            conf['checked'] = True
         return conf
         
     def getColumnConfig(self):
@@ -274,8 +319,8 @@ class BooleanField(Field):
 class ForeignKey(Field):
     MANYTOMANY = False
     RENDERER = 'Ext.django.FKRenderer'
-    def getEditor(self, initialValue = False):
-        conf = super(ForeignKey, self).getEditor(initialValue = initialValue)
+    def getEditor(self, *args, **kwargs):
+        conf = super(ForeignKey, self).getEditor(*args, **kwargs)
         #REST_index_url = reverse('modelIndex', args=(self.field.related.parent_model._meta.app_label,  self.field.related.parent_model._meta.object_name))
         REST_index_url='/fake'
         conf.update( {'xtype':'djangocombo', 'enableMultiSelect':self.MANYTOMANY, 'model':'%s.%s' % (self.field.related.parent_model._meta.app_label,  self.field.related.parent_model._meta.object_name)} )

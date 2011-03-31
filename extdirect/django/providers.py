@@ -7,6 +7,10 @@ from django.conf import settings
 
 from extserializer import jsonDumpStripped
 
+import extforms
+
+from crud import ExtDirectCRUDComplex ,  format_form_errors
+
 SCRIPT = """
 Ext.onReady(function() {
     Ext.Direct.addProvider(%s);
@@ -129,6 +133,53 @@ Ext.ns('%s');
         
         return config    
 
+    
+    def registerCRUD(self, cls,  action = None, app = None ):
+        # register CRUD actions for specified cls model
+        # the default ExtDirect action will be 'app_label_model_name'
+        
+        class CrudItem( ExtDirectCRUDComplex ):
+            model = cls
+            provider = self
+            
+        item = CrudItem()
+        
+        if not app:
+            app = cls._meta.app_label
+        if not action:
+            action = '%s_%s' % (app, cls.__name__)
+        item.register_actions(self, action , False, None)
+        return item
+        
+    def registerForm(self, formCls,  action = None, name = None, success = None):
+        # register submit action for forms
+        if not action:
+            action = 'forms_%s' % formCls.__name__
+        
+        def load(request):
+            print 'LOAD FORM'
+            return {'ok':True}
+            
+        def submit(request):
+            c = formCls(data = request.POST, files = request.FILES)
+            if c.is_valid():
+                if success and callable(success):
+                    success(request, c)
+                return {'success':True}
+            else:
+                return {'success':False, 'errors':format_form_errors(c.errors) }
+                
+        def getFields(request):
+            c = formCls()
+            helper = extforms.Form(formInstance = c)
+            extfieldsConfig = helper.getFieldsConfig()
+            return {'fields':extfieldsConfig}
+            
+        self.register(load, action = action, name = 'load', form_handler = False)        
+        self.register(getFields, action = action, name = 'getFields', len=0, form_handler = False)        
+        self.register(submit, action = action, name = 'submit', len=0, form_handler = True)
+
+        
     def register(self, method, action=None, name=None, len=0, form_handler=False, \
                  login_required=False, permission=None):
         

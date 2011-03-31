@@ -2,7 +2,43 @@
 // define some helpers for django / ExtDirect
 //
  
+
 Ext.ns('Ext.django');
+ 
+// fix for emptyText bug that is sent to server 
+Ext.django.serializeForm = function (form) {
+    var fElements = form.elements || (document.forms[form] || Ext.getDom(form)).elements, 
+        hasSubmit = false, 
+        encoder = encodeURIComponent, 
+        name, 
+        data = '', 
+        type, 
+        hasValue;
+
+    Ext.each(fElements, function(element){
+        name = element.name;
+        type = element.type;
+
+        if (!element.disabled && name ) {
+            if (/select-(one|multiple)/i.test(type)) {
+                Ext.each(element.options, function(opt){
+                    if (opt.selected) {
+                        hasValue = opt.hasAttribute ? opt.hasAttribute('value') : opt.getAttributeNode('value').specified;
+                        data += String.format("{0}={1}&", encoder(name), encoder(hasValue ? opt.value : opt.text));
+                    }
+                });
+            } else if (!(/file|undefined|reset|button/i.test(type))) {
+                if (!(/radio|checkbox/i.test(type) && !element.checked) && !(type == 'submit' && hasSubmit)) {
+                    var value = (element.className.indexOf('x-form-empty-field')>-1)?'':element.value;
+                    data += encoder(name) + '=' + encoder(value) + '&';
+                    hasSubmit = /submit/i.test(type);
+                }
+            }
+        }
+    });
+    return data.substr(0, data.length - 1);
+}
+
 
 
 Ext.django.booleanFieldRenderer = function (obj) {
@@ -81,6 +117,9 @@ Ext.django.Combo = Ext.extend(Ext.ux.AwesomeCombo, {
             ,emptyText:'choose :'
             ,typeAhead:false
             ,mode:'local'
+            ,queryParam:'name__istartswith'
+            ,queryDelay:100
+            ,minChars:2
             ,editable:false              
         });
         Ext.django.Combo.superclass.constructor.call( this, config );
@@ -204,8 +243,7 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
         this.lastActiveEditor = this.activeEditor;
         this.activeEditor = null;
 
-        var r = ed.record,
-            field = this.colModel.getDataIndex(ed.col);
+        var r = ed.record, field = this.colModel.getDataIndex(ed.col);
         value = this.postEditValue(value, startValue, r, field);
         if(this.forceValidation === true || Ext.encode(value) !== Ext.encode(startValue)){
             var e = {
@@ -249,5 +287,150 @@ Ext.django.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
 }); 
     
     
+function testD() {
+    console.log(1);
+    r = django[ 'forms_SampleForm' ].getFields();
+    console.log(r);
+    
+}
+
+Ext.django.Form = Ext.extend(Ext.Panel, {
+    border: false,
+    padding: 10,
+
+    formCls: 'app.FormClass',
+    formConfig:{
+        fields:[]
+        },
+    
+    initComponent:function() {
+        this.items = [
+            {html:'<div style="text-align:center">loading...</div>'}
+        ];
+        var config = {
+                
+        }
+        Ext.apply(this, Ext.apply(this.initialConfig, config));
+        Ext.django.Form.superclass.initComponent.apply(this, arguments);
+        
+        this.on('render', function() {
+            this.loadForm();
+        }, this);
+        
+        this.addEvents['formLoaded'];
+        
+    }
+    ,getDirectAction:function() {
+        return django['forms_' + this.formCls];
+    }
+    ,loadCallback:function(data, result) {
+        console.log('loadCallback', this, arguments);
+        this.removeAll();
+        
+        Ext.each(this.formConfig.fields, function(item) {
+            Ext.each(data.fields, function(item2) {
+                if (item.name == item2.name) {
+                    Ext.apply(item2, item);
+                    return false;
+                }
+            }, this);
+            // if in data.fields, override config.items
+        }, this);
+        
+        var conf = {
+              xtype:'form'
+             ,api:this.getDirectAction()
+             ,border:false
+             ,labelWidth:200
+             ,items:data.fields
+       
+             ,buttons:[{
+                text: 'Submit',
+                scope:this,
+                handler: function(){    
+                    //console.log('submit form', this, arguments);
+                    this.get(0).getForm().submit({
+                        params: {
+                     
+                        },
+                        failure: function( form, action ){
+                            if( action.failureType == Ext.form.Action.SERVER_INVALID){
+                                alert('form submit failure' + action.result.errors); 
+                                }
+                            this.fireEvent("submitFailure", form, action);
+                            
+                        },
+                        success: function( form, action ){
+                            this.fireEvent("submitSuccess", form, action);
+                        },
+                        scope:this
+                    });
+                    
+                }
+            }]
+        }
+        Ext.apply(conf, this.formConfig);
+        
+        // custom layout
+        this.add(conf);
+        this.doLayout();
+        this.fireEvent('formLoaded');
+        
+    }
+    ,loadForm:function() {
+        this.getDirectAction().getFields(this.loadCallback.createDelegate(this));
+    }
+        
+});
+
+ 
+ 
+    
+/*
+this.form.addEvents({
+            'submitSuccess': true,
+            'submitFailure': true
+        });
+        
+
+ var actionName = 'forms_' + this.formCls;
+        console.log( actionName );
+        var config = {
+            api: django[ actionName ],
+            buttons:[{
+                text: 'Submit',
+                scope:this,
+                handler: function(){    
+                    console.log('submit form', this, arguments);
+                    this.getForm().submit({
+                        params: {
+                            test2:2
+                        },
+                        failure: function( form, action ){
+                            if( action.failureType == Ext.form.Action.SERVER_INVALID && typeof action.result.errors['__all__'] != 'undefined' ){
+                                alert('form submit failure' + action.result.errors); 
+                                }
+                            form.fireEvent("submitFailure", form, action);
+                        },
+                        success: function( form, action ){
+                            form.fireEvent("submitSuccess", form, action);
+                        }
+                    });
+                    
+                }
+            }],
+            // configs apply to child items
+            defaults: {anchor: '-20'}, // provide some room on right for validation errors
+            defaultType: 'textfield',
+            items: testD(),
+            paramsAsHash: true,
+            //paramOrder: ['test', 'test2']
+            */
+            
+            
+            
+
 Ext.reg('djangogrid', Ext.django.Grid);
+Ext.reg('djangoform', Ext.django.Form);
+ 
     

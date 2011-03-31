@@ -24,7 +24,8 @@ class Form(object):
         self.form = formInstance or forms.Form()
         self.fields = fields        # list of fields to display
         self.data = {}
-        
+      
+     
     def getConfig(self, initialData = False):
         form_fields = self.getFieldsConfig(initialData = initialData)
         conf = {
@@ -46,7 +47,7 @@ class Form(object):
             cls = item.__class__.__name__
             #print item, cls
             extField = getattr(extfields, cls)( item )
-            editor = extField.getEditor(initialValue = (initialData and self.getFieldValue(item.name)) )
+            editor = extField.getEditor(initialValue = (initialData and self.getFieldValue(item.name)), data = {'name':name} )
             if editor:
 
                 conf.append( editor )
