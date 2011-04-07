@@ -3,6 +3,8 @@ extdirect.django
 
 extdirect.django allows you to generate ExtJS components from your django models using ExtDirect api
 
+Working demo here : [http://extdirect.demo.revolunet.com/][5]
+
 This is a fork from [gsancho original project][1].
 
 **Additions**:
@@ -24,7 +26,7 @@ This is a fork from [gsancho original project][1].
 
 **Doc :**
 
- * See [the demo][5] for full examples or [the tutorial][6]
+ * See [the demo][5] for full examples
  * See [original project][1] for low-level details
 
 
@@ -34,5 +36,5 @@ This is a fork from [gsancho original project][1].
   [2]: http://sencha.com/products/extjs
   [3]: http://www.djangoproject.com
   [4]: https://github.com/revolunet/Ext.ux.AwesomeCombo
-  [5]: #
+  [5]: http://extdirect.demo.revolunet.com/
   [6]: #
