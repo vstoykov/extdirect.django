@@ -392,7 +392,6 @@ class ModelChoiceField(ForeignKey):
         return conf
 
 
-
 class ManyToManyField(ForeignKey):
 
     MANYTOMANY = True
@@ -403,4 +402,7 @@ class ManyToManyField(ForeignKey):
             value = self.parseFK(self.field.rel.to, value)
         return value
 
+
+class ModelMultipleChoiceField(ModelChoiceField, ManyToManyField):
+    pass
 
