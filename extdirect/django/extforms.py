@@ -8,7 +8,6 @@ import extfields
 # conversion for some django forms field types
 FormField_to_ModelField = {
      'TypedChoiceField':'CharField'
-    ,'ModelChoiceField':'ForeignKey'
     ,'ModelMultipleChoiceField':'ManyToManyField'
 
 }

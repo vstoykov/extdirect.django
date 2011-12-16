@@ -50,15 +50,31 @@ class Serializer(extdirectSerializer):
             self._current['__unicode__'] = smart_unicode( obj )
 
 
-
-def jsonDump( obj ):
+def jsonDump(obj):
     return simplejson.dumps(obj, cls=DjangoJSONEncoder, ensure_ascii=False,
         indent=4)
 
-def jsonDumpStripped( inDict ):
+def jsonDumpStripped(inDict):
     ''' strip some specials values for ExtJs in the simplejson dump '''
+
     jsonStr = jsonDump(inDict)
-    rawstr = r'''\'(renderer|editor|hidden|sortable|sortInfo|listeners|view|failure|success|scope|fn|store|handler|callback|function)'\s*:\s*'(.+)\''''
+    rawstr = r'\'(%s)\'\s*:\s*\'(.+)\'' % '|'.join([
+        'renderer',
+        'editor',
+        'hidden',
+        'sortable',
+        'sortInfo',
+        'listeners',
+        'view',
+        'failure',
+        'success',
+        'scope',
+        'fn',
+        'store',
+        'handler',
+        'callback',
+        'function',
+    ])
     reg = re.compile(rawstr,  re.MULTILINE)
     newstr = reg.subn('"\\1":\\2', jsonStr)[0]
   #  newstr = jsonStr

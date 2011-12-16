@@ -264,6 +264,7 @@ Ext.ns('%s');
                 response['type'] = 'exception'
                 response['message'] = traceback.format_exception_only(etype, evalue)[0]
                 response['where'] = traceback.extract_tb(etb)[-1]
+                raise
             else:
                 raise e
 
@@ -275,9 +276,9 @@ Ext.ns('%s');
         Check if the request came from a Form POST and call
         the dispatcher for every ExtDirect request recieved.
         """
-        #print "routeur"
+
         if request.POST.has_key('extAction'):
-            #print "ok"
+
             extdirect_request = dict(
                 action = request.POST['extAction'],
                 method = request.POST['extMethod'],
@@ -286,9 +287,9 @@ Ext.ns('%s');
                 isForm = True
             )
         elif request.raw_post_data:
-           # print 11
+
             extdirect_request = simplejson.loads(request.raw_post_data)
-            #print extdirect_request
+
         else:
             return HttpResponseBadRequest('Invalid request')
 
