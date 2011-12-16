@@ -3,6 +3,7 @@ import sys, traceback
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import simplejson
 from django.conf import settings
+from django.db import transaction
 
 from extserializer import jsonDumpStripped
 
