@@ -1,5 +1,5 @@
- 
- 
+
+
 import datetime
 from django.core.urlresolvers import reverse
 from django.utils.encoding import smart_str, smart_unicode
@@ -9,12 +9,12 @@ from django import forms
 #
 
 #
-# MISSING : 
+# MISSING :
 #
 
 #'CommaSeparatedIntegerField'    : {'type':'string'}
 #'FileField'                     : {'type':'string'}
-#'FilePathField'                 : {'type':'string'} 
+#'FilePathField'                 : {'type':'string'}
 #'ImageField'                    : {'type':'string'}
 #'IPAddressField'                : {'type':'string'}
 #'NullBooleanField'              : {'type':'boolean'}
@@ -23,20 +23,20 @@ from django import forms
 #'SmallIntegerField'             : {'type':'int'}
 #'TextField'                     : {'type':'string'}
 
- 
+
 class Field(object):
     WIDTH = 200
     COL_WIDTH = None
     def __init__(self, field):
         self.field = field  # django field
-    
+
     def getEditor(self, initialValue = False, data = {}):
         name = self.getName()
         label = name
-         
+
         if getattr(self.field, 'verbose_name', None):
             label = unicode(self.field.verbose_name)
-        
+
         # if not self.field.blank:
             # label += '*'
         conf = {
@@ -59,7 +59,7 @@ class Field(object):
             if pixels>300:
                 pixels=300
             conf['width'] = pixels
-        if self.WIDTH:  
+        if self.WIDTH:
             conf['width'] = self.WIDTH
         # disable some fields : eg: autofields and auto datetimefields
         if not getattr(self.field, 'editable', True) or self.field.__class__.__name__ == 'AutoField':
@@ -72,7 +72,7 @@ class Field(object):
         conf.update(data)
         #if self.field.name in  .in _get_validation_exclusions
         return conf
-            
+
     def getName(self):
         if isinstance(self.field, forms.Field):
             name = self.field.label
@@ -96,18 +96,18 @@ class Field(object):
                 ,'allowBlank': self.allowBlank()
                 }
         return conf
-        
-        
+
+
     def getColumnConfig(self):
         conf = {
-            'header': unicode(self.field.verbose_name), 
-            'tooltip': unicode(self.field.verbose_name), 
+            'header': unicode(self.field.verbose_name),
+            'tooltip': unicode(self.field.verbose_name),
             'name':unicode(self.field.name),
-            'sortable': True, 
+            'sortable': True,
             'dataIndex': unicode(self.field.name),
             'editor':self.getEditor()
         }
-        if self.COL_WIDTH:  
+        if self.COL_WIDTH:
             conf['width'] = self.COL_WIDTH
         return conf
 
@@ -115,30 +115,30 @@ class Field(object):
         # called by the handler
         # transform input data to fit field format
         return value
-    
+
     def getValue(self, value):
         # format data for ExtJs emitter
         return value
-        
+
 class AutoField(Field):
     WIDTH=40
     def getEditor(self, *args, **kwargs):
         conf = super(AutoField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'hidden', 'editable':False} )
         return conf
-        
+
     def getColumnConfig(self):
         conf = super(AutoField, self).getColumnConfig()
         conf['hidden'] = True
         return conf
-        
+
 class EmailField(Field):
     WIDTH=250
     def getEditor(self, *args, **kwargs):
         conf = super(EmailField, self).getEditor(*args, **kwargs)
         conf.update( {'xtype':'textfield', 'vtype':'email'} )
         return conf
-        
+
 class URLField(Field):
     WIDTH=250
     def getEditor(self, *args, **kwargs):
@@ -170,25 +170,25 @@ class CharField(Field):
         return conf
 
         return {'xtype':'textfield'}
-        
+
 ChoiceField = CharField
 SlugField = CharField
 
 class MultipleChoiceField(ChoiceField):
-    def getEditor(self, *args, **kwargs):  
+    def getEditor(self, *args, **kwargs):
         conf = super(MultipleChoiceField, self).getEditor(*args, **kwargs)
         conf['enableMultiSelect'] = True
         conf['format'] = 'array'
         return conf
 
 class MultipleStringChoiceField(ChoiceField):
-    def getEditor(self, *args, **kwargs):  
+    def getEditor(self, *args, **kwargs):
         conf = super(MultipleStringChoiceField, self).getEditor(*args, **kwargs)
         conf['enableMultiSelect'] = True
         conf['format'] = 'string'
         return conf
-          
-          
+
+
 
 class DecimalField(Field):
     FORMAT_RENDERER = '0.00'
@@ -203,14 +203,14 @@ class DecimalField(Field):
         conf = super(DecimalField, self).getReaderConfig()
         conf['type'] = self.TYPE
         return conf
-        
+
     def getColumnConfig(self):
         conf = super(DecimalField, self).getColumnConfig()
         conf['xtype'] = 'numbercolumn'
         conf['align'] = 'right'
         conf['format'] = self.FORMAT_RENDERER
         return conf
-        
+
     def parseValue(self, value):
         if value:
             value = str(value)
@@ -219,12 +219,12 @@ class DecimalField(Field):
 class IntegerField(DecimalField):
     FORMAT_RENDERER = '0'
     TYPE = 'int'
-  
+
 FloatField = DecimalField
-                    
-                    
-                    
-                    
+
+
+
+
 class DateTimeField(Field):
     FORMAT = 'Y-m-d H:i:s'
     FORMAT_RENDERER = 'Y-m-d H:i'
@@ -243,23 +243,23 @@ class DateTimeField(Field):
         conf['dateFormat'] = self.FORMAT
         conf['type'] = 'date'
         return conf
-        
+
     def getColumnConfig(self):
         conf = super(DateTimeField, self).getColumnConfig()
         conf['xtype'] = 'datecolumn'
         conf['align'] = 'center'
         conf['format'] = self.FORMAT_RENDERER
         return conf
-     
+
     def parseValue(self, value):
         if value:
             value = datetime.datetime.strptime(value, self.FORMAT_PARSE)
         return value
-    
+
     def getValue(self, value):
         # format data for ExtJs emitter
         return value.strftime(self.FORMAT_GET)
-        
+
 class DateField(DateTimeField):
     FORMAT = 'Y-m-d'
     FORMAT_RENDERER = 'Y-m-d'
@@ -272,7 +272,7 @@ class DateField(DateTimeField):
                 value = value.split('T')[0]
             value = datetime.datetime.strptime(value, self.FORMAT_PARSE).date()
         return value
-    
+
 class TimeField(DateTimeField):
     FORMAT = 'H:i:s'
     FORMAT_RENDERER = 'H:i'
@@ -286,13 +286,13 @@ class TimeField(DateTimeField):
                 value = value.split('T')[1]
             value = datetime.datetime.strptime(value, self.FORMAT_PARSE).time()
         return value
-     
 
-     
-     
-     
-     
-     
+
+
+
+
+
+
 class BooleanField(Field):
 
     WIDTH = 30
@@ -305,7 +305,7 @@ class BooleanField(Field):
         if getattr(self.field, 'initial', None) == True:
             conf['checked'] = True
         return conf
-        
+
     def getColumnConfig(self):
         conf = super(BooleanField, self).getColumnConfig()
         conf['xtype'] = 'checkcolumn'
@@ -325,25 +325,25 @@ class ForeignKey(Field):
         REST_index_url='/fake'
         conf.update( {'xtype':'djangocombo', 'enableMultiSelect':self.MANYTOMANY, 'model':'%s.%s' % (self.field.related.parent_model._meta.app_label,  self.field.related.parent_model._meta.object_name)} )
         return conf
-        
+
     def getColumnConfig(self):
         conf = super(ForeignKey, self).getColumnConfig()
         conf['related'] = True
         conf['renderer'] = {'fn':self.RENDERER, 'scope':'this'}
         return conf
-        
+
     def getReaderConfig(self):
         conf = super(ForeignKey, self).getReaderConfig()
         conf['defaultValue'] = ''
         return conf
-        
+
     def parseValue(self, value):
         if value:
             value = self.parseFK(self.field.rel.to, value)[0]
         if not value:
             value = None
         return value
- 
+
     def parseFK( self, cls, value ):
         """ translates FK or M2M values to instance list """
         relateds = []
@@ -359,14 +359,14 @@ class ForeignKey(Field):
         else:
             relateds.append( cls.objects.get(pk = value) )
         return relateds
-        
+
 class ManyToManyField(ForeignKey):
     MANYTOMANY = True
     RENDERER = 'Ext.django.M2MRenderer'
-    
+
     def parseValue(self, value):
         if value:
             value = self.parseFK(self.field.rel.to, value)
         return value
- 
- 
+
+
