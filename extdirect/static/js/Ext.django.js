@@ -100,25 +100,31 @@ Ext.django.ComboBox = Ext.extend(Ext.ux.AwesomeCombo, {
         var baseParams = {}       
         var model = config.model.replace('.', '_');
         var config = Ext.applyIf(config, {
-            valueField:'id'
-            ,displayField:'__unicode__'
-            ,triggerAction:'all'
-            ,format:'object'
-            ,pageSize:pageSize
-            ,store: new Ext.django.IndexStore({
-                api:{read:django[model].read}
-                ,baseParams:{
-                    start:0
-                    ,limit:pageSize
+            valueField: 'id',
+            displayField: '__unicode__',
+            triggerAction: 'all',
+            format: 'object',
+            pageSize: pageSize,
+            store: new Ext.django.IndexStore({
+                api: {
+                    read: django[model].read
+                },
+                baseParams: {
+                    start: 0,
+                    limit: pageSize
                 }
-                })
-            ,emptyText:'choose :'
-            ,typeAhead:false
-            ,mode:'local'
-            ,queryParam:'name__istartswith'
-            ,queryDelay:100
-            ,minChars:2
-            ,editable:false              
+            }),
+            emptyText: 'choose : ',
+            typeAhead: false,
+            mode: 'local',
+            queryParam: 'name__istartswith',
+            queryDelay: 100,
+            minChars: 2,
+            editable: false,
+            format: config.enableMultiSelect ? 'array' : 'string',
+            typeAhead: true,
+            disableClearButton: !config.allowBlank,
+            hiddenName: config.name
         });
         Ext.django.ComboBox.superclass.constructor.call( this, config );
 
