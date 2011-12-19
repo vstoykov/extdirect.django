@@ -8,56 +8,54 @@ import extfields
 # conversion for some django forms field types
 FormField_to_ModelField = {
      'TypedChoiceField':'CharField'
-    ,'ModelChoiceField':'ForeignKey'
-    ,'ModelMultipleChoiceField':'ManyToManyField'
 
 }
 def model_to_modelform(model):
     meta = type('Meta', (), { "model":model, })
     modelform_class = type('modelform', (forms.ModelForm,), {"Meta": meta})
     return modelform_class
- 
-    
+
+
 class Form(object):
 
     def __init__(self, formInstance = None, fields = []):
         self.form = formInstance or forms.Form()
         self.fields = fields        # list of fields to display
         self.data = {}
-      
-     
+
+
     def getConfig(self, initialData = False):
         form_fields = self.getFieldsConfig(initialData = initialData)
         conf = {
             'xtype':'form'
             ,'items':form_fields
-            
+
         }
         return conf
-        
+
     def getFieldList(self):
         return self.form.fields
-        
+
     def getFieldValue(self, fieldName):
         return self.data.get(fieldName)
-        
+
     def getFieldsConfig(self, initialData = False):
         conf = []
         for name, item in self.getFieldList().items():
             cls = item.__class__.__name__
-            #print item, cls
+            cls = FormField_to_ModelField.get(cls, cls)
             extField = getattr(extfields, cls)( item )
             editor = extField.getEditor(initialValue = (initialData and self.getFieldValue(item.name)), data = {'name':name} )
             if editor:
 
                 conf.append( editor )
         return conf
-        
+
 class ModelForm(Form):
     def __init__(self, modelCls, fields = []):
         self.form = model_to_modelform( modelCls )()
         self.instance = None
-        
+
         self.baseFields = self.form._meta.model._meta.fields + self.form._meta.model._meta.many_to_many
         self.baseFieldsNames = [f.name for f in self.baseFields]
         if not fields:
@@ -75,10 +73,10 @@ class ModelForm(Form):
                     return [{'id':i.pk, '__unicode__':str(i)} for i in val.all()]
                 return val
         return None
-        
+
     def setInstance(self, instance):
         self.instance = instance
-            
+
     def getConfig(self, initialData = True):
         conf = super(ModelForm, self).getConfig(initialData = initialData)
         conf.update({
@@ -88,7 +86,7 @@ class ModelForm(Form):
             }
         })
         return conf
-        
+
     def getFieldList(self):
         alist = self.baseFields
         tlist = []
@@ -96,6 +94,6 @@ class ModelForm(Form):
             if item.name in self.fields:
                 tlist.append(item)
         return tlist
- 
-        
-    
+
+
+

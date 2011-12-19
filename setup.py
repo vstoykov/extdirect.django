@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
-import os
 
-version = '0.4dev'
+version = '0.4.3'
 
 setup(name='extdirect.django',
       version=version,
@@ -19,7 +18,7 @@ setup(name='extdirect.django',
       author='Julien Bouquillon',
       author_email='julien@revolunet.com',
       url='http://github.com/revolunet/extdirect.django/tree/master',
-      license='BSD',      
+      license='BSD',
       namespace_packages=['extdirect'],
       packages=find_packages(exclude=['ez_setup']),
       test_suite="extdirect.django.tests",
