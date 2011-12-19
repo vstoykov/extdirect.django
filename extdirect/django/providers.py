@@ -3,13 +3,13 @@ import sys, traceback
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import simplejson
 from django.conf import settings
-from django.db import transaction
+from django import forms
 
 from extserializer import jsonDumpStripped
 
 import extforms
 
-from crud import ExtDirectCRUDComplex ,  format_form_errors
+from crud import ExtDirectCRUDComplex, format_form_errors
 
 SCRIPT = """
 Ext.onReady(function() {
@@ -138,7 +138,7 @@ Ext.ns('%s');
         # register CRUD actions for specified cls model
         # the default ExtDirect action will be 'app_label_model_name'
 
-        class CrudItem( ExtDirectCRUDComplex ):
+        class CrudItem(ExtDirectCRUDComplex):
             model = cls
             provider = self
 
@@ -157,11 +157,15 @@ Ext.ns('%s');
             action = 'forms_%s' % formCls.__name__
 
         def load(request):
-            print 'LOAD FORM'
             return {'ok':True}
 
         def submit(request):
-            c = formCls(data = request.POST, files = request.FILES)
+            data = request.POST.copy()
+            for k, v in formCls.base_fields.iteritems():
+                if isinstance(v.widget, forms.widgets.SelectMultiple):
+                    data.setlist(k, data.pop(k)[0][1:-1].split(','))
+
+            c = formCls(data=data, files=request.FILES)
             if c.is_valid():
                 if success and callable(success):
                     success(request, c)
