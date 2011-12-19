@@ -247,20 +247,22 @@ class ExtDirectCRUD(BaseExtDirectCRUD):
             else:
                 success = False
 
-        if success:
-            transaction.commit()
-            self.post_create(ids)
-            res = self.store.query(self.model.objects.filter(pk__in=ids), metadata=False, colModel=False)
-            res[self.store.message] = self.create_success_msg
-            return res
-        else:
-            transaction.savepoint_rollback(sid)
-            if self.show_form_validation:
-                err = format_form_errors(errors)
+        try:
+            if success:
+                self.post_create(ids)
+                res = self.store.query(self.model.objects.filter(pk__in=ids), metadata=False, colModel=False)
+                res[self.store.message] = self.create_success_msg
+                return res
             else:
-                err = self.create_failure_msg
+                transaction.savepoint_rollback(sid)
+                if self.show_form_validation:
+                    err = format_form_errors(errors)
+                else:
+                    err = self.create_failure_msg
 
-            return self.failure(err)
+                return self.failure(err)
+        finally:
+            transaction.commit()
 
     #READ
     def read(self, request, fields = None):
@@ -322,20 +324,22 @@ class ExtDirectCRUD(BaseExtDirectCRUD):
             else:
                 success = False
 
-        if success:
-            transaction.commit()
-            self.post_update(ids)
-            res = self.store.query(self.model.objects.filter(pk__in=ids), metadata=False, colModel=False)
-            res[self.store.message] = self.update_success_msg
-            return res
-        else:
-            transaction.savepoint_rollback(sid)
-            if self.show_form_validation:
-                err = format_form_errors(errors)
+        try:
+            if success:
+                self.post_update(ids)
+                res = self.store.query(self.model.objects.filter(pk__in=ids), metadata=False, colModel=False)
+                res[self.store.message] = self.update_success_msg
+                return res
             else:
-                err = self.update_failure_msg
+                transaction.savepoint_rollback(sid)
+                if self.show_form_validation:
+                    err = format_form_errors(errors)
+                else:
+                    err = self.update_failure_msg
 
-            return self.failure(err)
+                return self.failure(err)
+        finally:
+            transaction.commit()
 
     #DESTROY
     def destroy(self, request):
