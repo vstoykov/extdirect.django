@@ -28,6 +28,7 @@ setup(name='extdirect.django',
                 'extdirect/django/static/css/*',
                 'extdirect/django/static/js/*',
                 'extdirect/django/static/images/*',
+            ],
           },
       zip_safe=False,
       install_requires=[
