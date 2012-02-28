@@ -23,13 +23,6 @@ setup(name='extdirect.django',
       packages=find_packages(exclude=['ez_setup']),
       test_suite="extdirect.django.tests",
       include_package_data=True,
-      package_data={
-            'exdirect.django': [
-                'extdirect/django/static/css/*',
-                'extdirect/django/static/js/*',
-                'extdirect/django/static/images/*',
-            ],
-          },
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-

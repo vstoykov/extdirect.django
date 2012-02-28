@@ -1,3 +1,5 @@
 include *.txt
+include MANIFEST.in
 recursive-include docs *.txt
 recursive-include doctests *.txt
+recursive-include extdirect/django/static/* *
