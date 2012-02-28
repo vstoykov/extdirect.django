@@ -1,4 +1,6 @@
 extdirect.django.egg-info/
 *.pyc
 *~
+build
+dist
 
